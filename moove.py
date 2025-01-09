@@ -3,10 +3,10 @@ import time
 import threading
 
 def ask_to_stop(stop_event):
-    """Demande à l'utilisateur s'il souhaite arrêter l'application et définit l'événement stop_event si la réponse est 'Y'."""
+    """Demande à l'utilisateur s'il souhaite arrêter le script."""
     while not stop_event.is_set():
-        response = input("Voulez-vous arrêter l'application ? (Y/N): ").strip().upper()
-        if response == 'Y':
+        response = input("Voulez-vous arrêter l'application ? (y/n) : ").strip().upper()
+        if response == 'y':
             stop_event.set()
 
 def jiggle(move_distance=10, move_interval=5, rest_interval=10, stop_event=None):
@@ -33,15 +33,25 @@ def jiggle(move_distance=10, move_interval=5, rest_interval=10, stop_event=None)
     finally:
         print("Jiggler arrêté.")
 
+
 if __name__ == "__main__":
     stop_event = threading.Event()
 
-    # Démarrer le thread qui demande à l'utilisateur s'il souhaite arrêter l'application
-    ask_thread = threading.Thread(target=ask_to_stop, args=(stop_event,))
-    ask_thread.start()
+    # Lancement du thread pour le jiggle
+    jiggle_thread = threading.Thread(target=jiggle, args=(10, 2, 5, stop_event))
+    jiggle_thread.start()
 
-    # Démarrer le jiggle
-    jiggle(stop_event=stop_event)
-
-    # Attendre la fin du thread de demande
-    ask_thread.join()
+    try:
+        # Saisie dans le thread principal
+        while not stop_event.is_set():
+            response = input("Voulez-vous arrêter l'application ? (y/n) : ").strip().lower()
+            if response == 'y':
+                stop_event.set()
+    except KeyboardInterrupt:
+        stop_event.set()
+        print("\nInterruption par l'utilisateur détectée.")
+    
+    # Attendre que le thread jiggle termine
+    jiggle_thread.join()
+    print("Fin du programme.")
+    
